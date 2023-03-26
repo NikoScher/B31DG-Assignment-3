@@ -18,14 +18,14 @@
 #define T6_PIN        0   // Task 6 push button input pin
 #define T7_PIN        0   // Task 7 LED output pin
 
-// Task frequencies (Hz)
-#define TASK1_F       250   // blah
-#define TASK2_F       50    // blah
-#define TASK3_F       125   // blah
-#define TASK4_F       50    // blah
-#define TASK5_F       10    // blah
-#define TASK6_F       100   // blah
-#define TASK7_F       100   // blah
+// Task periods (ms)
+#define TASK1_P       4   // blah
+#define TASK2_P       20    // blah
+#define TASK3_P       8   // blah
+#define TASK4_P       20    // blah
+#define TASK5_P       100    // blah
+#define TASK6_P       100   // blah
+#define TASK7_P       100   // blah
 
 // Task parameters
 #define BAUD_RATE       9600  // Baud rate
