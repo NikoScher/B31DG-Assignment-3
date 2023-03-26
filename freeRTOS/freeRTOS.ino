@@ -26,6 +26,8 @@
 Freqs freqs;
 SemaphoreHandle_t freqSem;
 
+QueueHandle_t btnQueue;
+
 uint16 anIn[NUM_PARAMS];  // Array for storing previous analogue measurements
 uint8 currInd;            // Current index to overwrite in anIn[]
 
@@ -52,6 +54,7 @@ void setup() {
   freqs.freq_t3 = 0;
 
   freqSem = xSemaphoreCreateMutex();
+  btnQueue = xQueueCreate(1, sizeof(uint8));
 
   xTaskCreate(
     task1,
@@ -215,23 +218,27 @@ void task5(void *pvParameters) {
   }
 }
 
-// Period = 100ms / Rate = 10Hz
+// Period = 10ms / Rate = 100Hz
 void task6(void *pvParameters) {
   (void) pvParameters;
   
   for (;;) {
-    // TODO
+    uint8 btn = digitalRead(T6_PIN);
+    xQueueSend(btnQueue, &btn, 10);
 
     waitTask(TASK6_P);
   }
 }
 
-// Period = 100ms / Rate = 10Hz
+// Period = 8ms / Rate = 125Hz
 void task7(void *pvParameters) {
   (void) pvParameters;
   
   for (;;) {
-    // TODO
+    uint8 btn = 0;
+    if(xQueueReceive(btnQueue, &btn, 10) == pdPASS) {
+      digitalWrite(T7_PIN, btn);
+    }
 
     waitTask(TASK7_P);
   }

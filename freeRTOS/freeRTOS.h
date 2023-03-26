@@ -15,17 +15,17 @@
 #define T3_PIN        3   // Task 3 input measure signal pin
 #define T4_ANIN_PIN   4   // Task 4 analogue input pin
 #define T4_LED_PIN    0   // Task 4 LED output pin
-#define T6_PIN        0   // Task 6 push button input pin
-#define T7_PIN        0   // Task 7 LED output pin
+#define T6_PIN        6   // Task 6 push button input pin
+#define T7_PIN        7   // Task 7 LED output pin
 
 // Task periods (ms)
-#define TASK1_P       4   // blah
+#define TASK1_P       4     // blah
 #define TASK2_P       20    // blah
-#define TASK3_P       8   // blah
+#define TASK3_P       8     // blah
 #define TASK4_P       20    // blah
-#define TASK5_P       100    // blah
-#define TASK6_P       100   // blah
-#define TASK7_P       100   // blah
+#define TASK5_P       100   // blah
+#define TASK6_P       10    // blah
+#define TASK7_P       8     // blah
 
 // Task parameters
 #define BAUD_RATE       9600  // Baud rate
