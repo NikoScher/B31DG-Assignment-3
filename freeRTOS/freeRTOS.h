@@ -10,13 +10,13 @@
 #define __FREERTOS_H__
 
 // Pin numbers
-#define T1_PIN        1   // Task 1 output signal pin
+#define T1_PIN        10  // Task 1 output signal pin
 #define T2_PIN        2   // Task 2 input measure signal pin
 #define T3_PIN        3   // Task 3 input measure signal pin
-#define T4_ANIN_PIN   4   // Task 4 analogue input pin
+#define T4_ANIN_PIN   5   // Task 4 analogue input pin
 #define T4_LED_PIN    0   // Task 4 LED output pin
-#define T6_PIN        6   // Task 6 push button input pin
-#define T7_PIN        7   // Task 7 LED output pin
+#define T6_PIN        4   // Task 6 push button input pin
+#define T7_PIN        1   // Task 7 LED output pin
 
 // Task periods (ms)
 #define TASK1_P       4     // blah
