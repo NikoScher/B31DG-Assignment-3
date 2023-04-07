@@ -96,7 +96,9 @@ void task1(void *pvParameters) {
     delayMicroseconds(30);
     digitalWrite(T1_PIN, LOW);
 
-    waitTask(TASK1_P);
+    // To account for FreeRTOS resolution being in millisecond range
+    delayMicroseconds(1000 - 200 - 50 - 30);
+    waitTask(TASK1_P - 1);
   }
 }
 
