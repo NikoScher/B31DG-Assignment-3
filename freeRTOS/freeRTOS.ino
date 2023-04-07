@@ -13,9 +13,10 @@
 // Convert period in us to frequency in Hz
 #define periodToFreq_us(T) (1 / (T / 1000000))
 
-// Convert freeRTOS ticks to real time in ms
+// Convert freeRTOS ticks to real time in ms and wait
 #define waitTask(t) (vTaskDelay(t / portTICK_PERIOD_MS))
 
+// Configure RTOS depending on number of cores
 #if CONFIG_FREERTOS_UNICORE
 #define ARDUINO_RUNNING_CORE 0
 #else
@@ -26,10 +27,18 @@
 Freqs freqs;
 SemaphoreHandle_t freqSem;
 
+// Event queue for task 6 button presses
 QueueHandle_t btnQueue;
 
 uint16 anIn[NUM_PARAMS];  // Array for storing previous analogue measurements
 uint8 currInd;            // Current index to overwrite in anIn[]
+
+// Task 6 bebounce variables
+uint16 prevDBTime;
+uint16 dbDelay;
+uint8 currBtn;
+uint8 newBtn;
+uint8 prevBtn;
 
 void setup() {
   Serial.begin(BAUD_RATE);
@@ -53,64 +62,24 @@ void setup() {
   freqs.freq_t2 = 0;
   freqs.freq_t3 = 0;
 
+  // Create RTOS semaphore and event queue
   freqSem = xSemaphoreCreateMutex();
   btnQueue = xQueueCreate(1, sizeof(uint8));
 
-  xTaskCreate(
-    task1,
-    "task1",
-    512,
-    (void*) 1,
-    3,
-    NULL);
+  // Inital values for button debounce
+  prevDBTime = 0; // ms
+  dbDelay = 70;   // ms
+  newBtn = LOW;
+  prevBtn = LOW;
 
-  xTaskCreate(
-    task2,
-    "task2",
-    512,
-    (void*) 1,
-    2,
-    NULL);
-
-  xTaskCreate(
-    task3,
-    "task3",
-    512,
-    (void*) 1,
-    3,
-    NULL);
-
-  xTaskCreate(
-    task4,
-    "task4",
-    512,
-    (void*) 1,
-    2,
-    NULL);
-
-  xTaskCreate(
-    task5,
-    "task5",
-    512,
-    (void*) 1,
-    1,
-    NULL);
-
-  xTaskCreate(
-    task6,
-    "task6",
-    512,
-    (void*) 1,
-    1,
-    NULL);
-
-  xTaskCreate(
-    task7,
-    "task7",
-    512,
-    (void*) 1,
-    1,
-    NULL);
+  // xTaskCreate(function, label, stack, NULL, priority, NULL)
+  xTaskCreate(task1, "task1", 512,  (void*) 1, 2, NULL);
+  xTaskCreate(task2, "task2", 1024, (void*) 1, 4, NULL);
+  xTaskCreate(task3, "task3", 1024, (void*) 1, 3, NULL);
+  xTaskCreate(task4, "task4", 512,  (void*) 1, 3, NULL);
+  xTaskCreate(task5, "task5", 2048, (void*) 1, 1, NULL);
+  xTaskCreate(task6, "task6", 512,  (void*) 1, 2, NULL);
+  xTaskCreate(task7, "task7", 512,  (void*) 1, 2, NULL);
 }
 
 // Period = 4ms / Rate = 250Hz
@@ -141,9 +110,10 @@ void task2(void *pvParameters) {
     double period = (double) pulseIn(T2_PIN, HIGH) * 2;
     double freqT2 = periodToFreq_us(period); // Convert to frequency using T = 1/f
 
+    // Semaphore wait, will block until sempahore is available
     if(xSemaphoreTake(freqSem, portMAX_DELAY) == pdTRUE) {
       freqs.freq_t2 = freqT2;
-      xSemaphoreGive(freqSem);
+      xSemaphoreGive(freqSem);  // Semaphore signal
     }
     
     waitTask(TASK2_P);
@@ -160,9 +130,10 @@ void task3(void *pvParameters) {
     double period = (double) pulseIn(T3_PIN, HIGH) * 2;
     double freqT3 = periodToFreq_us(period); // Convert to frequency using T = 1/f
 
+    // Semaphore wait, will block until sempahore is available
     if(xSemaphoreTake(freqSem, portMAX_DELAY) == pdTRUE) {
       freqs.freq_t3 = freqT3;
-      xSemaphoreGive(freqSem);
+      xSemaphoreGive(freqSem);  // Semaphore signal
     }
   
     waitTask(TASK3_P);
@@ -174,7 +145,7 @@ void task4(void *pvParameters) {
   (void) pvParameters;
 
   for (;;) {
-    // Read analogue signal and increment index for next reading
+    // Read analogue signal and increment index for next btn
     // Analogue signal converted to 12 bit integer
     anIn[currInd] = analogRead(T4_ANIN_PIN);
     currInd = (currInd + 1) % NUM_PARAMS;
@@ -198,6 +169,7 @@ void task5(void *pvParameters) {
   (void) pvParameters;
   
   for (;;) {
+    // Semaphore wait, will block until sempahore is available
     if(xSemaphoreTake(freqSem, portMAX_DELAY) == pdTRUE) {
       // Map frequencies from 333Hz & 500Hz - 1000Hz to 0 - 99
       // Constrain to 0 - 99 as map() only creates gradient
@@ -211,7 +183,7 @@ void task5(void *pvParameters) {
       Serial.print(",");
       Serial.println(normFreqT3);
 
-      xSemaphoreGive(freqSem);
+      xSemaphoreGive(freqSem);  // Semaphore signal
     }
 
     waitTask(TASK5_P);
@@ -221,10 +193,25 @@ void task5(void *pvParameters) {
 // Period = 10ms / Rate = 100Hz
 void task6(void *pvParameters) {
   (void) pvParameters;
-  
+
   for (;;) {
-    uint8 btn = digitalRead(T6_PIN);
-    xQueueSend(btnQueue, &btn, 10);
+      uint8 btn = digitalRead(T6_PIN);
+
+      if (btn != prevBtn)
+        prevDBTime = millis();  // Reset db timer
+
+      // Check current press is longer than required delay
+      if ((millis() - prevDBTime) > dbDelay) {
+        // Check for change of state
+        if (btn != currBtn) {
+          currBtn = btn;
+          if (currBtn == HIGH)
+            newBtn = !newBtn; // Toggle button state
+        }
+      }
+
+      xQueueSend(btnQueue, &newBtn, 100); // Queue button state
+      prevBtn = btn;  // Update previous reading for next iter
 
     waitTask(TASK6_P);
   }
@@ -235,10 +222,10 @@ void task7(void *pvParameters) {
   (void) pvParameters;
   
   for (;;) {
+    // Check queue to write state of LED
     uint8 btn = 0;
-    if(xQueueReceive(btnQueue, &btn, 10) == pdPASS) {
+    if(xQueueReceive(btnQueue, &btn, 100) == pdPASS)
       digitalWrite(T7_PIN, btn);
-    }
 
     waitTask(TASK7_P);
   }

@@ -19,13 +19,13 @@
 #define T7_PIN        1   // Task 7 LED output pin
 
 // Task periods (ms)
-#define TASK1_P       4     // blah
-#define TASK2_P       20    // blah
-#define TASK3_P       8     // blah
-#define TASK4_P       20    // blah
-#define TASK5_P       100   // blah
-#define TASK6_P       10    // blah
-#define TASK7_P       8     // blah
+#define TASK1_P       4
+#define TASK2_P       20
+#define TASK3_P       8
+#define TASK4_P       20
+#define TASK5_P       100
+#define TASK6_P       10
+#define TASK7_P       8
 
 // Task parameters
 #define BAUD_RATE       9600  // Baud rate
