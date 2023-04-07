@@ -78,7 +78,7 @@ void setup() {
   xTaskCreate(task3, "task3", 1024, (void*) 1, 3, NULL);
   xTaskCreate(task4, "task4", 512,  (void*) 1, 3, NULL);
   xTaskCreate(task5, "task5", 2048, (void*) 1, 1, NULL);
-  xTaskCreate(task6, "task6", 512,  (void*) 1, 2, NULL);
+  xTaskCreate(task6, "task6", 1024, (void*) 1, 2, NULL);
   xTaskCreate(task7, "task7", 512,  (void*) 1, 2, NULL);
 }
 
